@@ -13,6 +13,7 @@ git_clone_commands = f'sudo ec2-user git clone https://github.com/guywilsonjr/{r
 install_pip_reqs = 'source ../bin/activate && sudo pip3 install -r requirements.txt'
 cdk_boot_command = 'cdk bootstrap 936272581790/us-west-2'
 new_alias_command = 'function newalias(){   echo "alias $1=\'$2\'" >> ~/.zshrc && source ~/.zshrc; }'
+grant_folder_permissions = 'chown ec2-user /home/ec2-user/{env_name}/{repo_name}/.*'
 git_alias_commands = [
     'newalias gstat "git status"',
     'newalias gpush "git push origin master"',

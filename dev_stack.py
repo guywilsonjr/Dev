@@ -41,14 +41,14 @@ class DevStack(core.Stack):
         [user_data.add_commands(command) for command in INIT_COMMANDS]
         
         ssm = boto3.client('ssm')
-        params = ssm.get_parameters(Names=['/aws/service/ami-amazon-linux-latest/amzn2-ami-minimal-hvm-x86_64-gp2'])
+        params = ssm.get_parameters(Names=['/aws/service/ami-amazon-linux-latest/amzn2-ami-minimal-hvm-arm64-ebs'])
         ami =  params['Parameters'][0]['Value']
         ami = ec2.AmazonLinuxImage(generation=ec2.AmazonLinuxGeneration.AMAZON_LINUX_2, user_data=user_data)
         
         instance = ec2.Instance(self, 
             f'{id}Instance', 
             role=instance_role,
-            instance_type=ec2.InstanceType('t3a.nano'),
+            instance_type=ec2.InstanceType('t3.nano'),
             allow_all_outbound=allow_all_outbound_traffic,
             machine_image=ami, 
             key_name='Dev', 
