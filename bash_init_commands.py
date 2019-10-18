@@ -35,7 +35,7 @@ source_comp = f'source {nvm_dir}/bash_completion'
 nvm_commands = [download_nvm, source_nvm, source_comp, install_node]
 #Setup DevEnv
 create_venv = f'python3 -m venv {env_dir}'
-git_clone = f'git clone https://github.com/guywilsonjr/{repo_name} {repo_dir}'
+git_clone = ec2_command(f'git clone https://github.com/guywilsonjr/{repo_name} {repo_dir}')
 grant_git_perms = f'chown ec2-user {repo_dir}/.git/* && chown ec2-user {repo_dir}/* && chown ec2-user {repo_dir}'
 source_env = f'source {env_dir}/bin/activate'
 install_pip_mods = f'pip3 install -r {repo_dir}/requirements.txt'
