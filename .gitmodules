@@ -1,0 +1,3 @@
+[submodule "PyAwnfra"]
+	path = PyAwnfra
+	url = ./PyAwnfra

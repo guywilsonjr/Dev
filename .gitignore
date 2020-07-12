@@ -1,0 +1,9 @@
+bin/
+lib/
+lib64
+node_modules/
+pyvenv.cfg
+package-lock.json
+PyAwnfra/
+cdk.out/
+.idea/
