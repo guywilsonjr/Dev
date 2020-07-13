@@ -10,11 +10,23 @@ app = core.App()
 
 class DevStack(core.Stack):
 
-    def __init__(self, parent: core.App, id: str):
-        super().__init__(parent, id)
+    def __init__(self, parent: core.App, name: str):
+        super().__init__(parent, name)
+        accessible_apps = ['Guywilsonjr']
+        accessible_cfn_app_regs = ['arn:aws:{}:{}:{}:*{}*'.format(CFNActions.name, self.region, self.account, app) for app in accessible_apps]
+        accessible_iam_app_regs = ['arn:aws:{}::{}:role/*{}*'.format(IAMIAMActions.name, self.account, app) for app in accessible_apps]
+        accessible_app_regs = accessible_cfn_app_regs + accessible_iam_app_regs
         self.sb_user = iam.User(
             self,
-            'SBUser'
+            'SBUser',
+            managed_policies=[
+                iam.ManagedPolicy(
+                self,
+                'SBUserPolicy',
+                statements=[iam.PolicyStatement(
+                    actions=[CFNActions.FULL_ACCESS, IAMIAMActions.FULL_ACCESS],
+                    resources=accessible_app_regs)]
+                )]
         )
 
         self.sb_user_access_key = iam.CfnAccessKey(
@@ -55,6 +67,7 @@ class DevStack(core.Stack):
                         'arn:aws:{}:{}:{}:*{}*'.format(CFNActions.name, self.region, self.account, self.stack_name),
                         'arn:aws:{}::{}:role/*{}*'.format(IAMIAMActions.name, self.account, self.stack_name),
                         'arn:aws:{}::{}:user/*{}*'.format(IAMIAMActions.name, self.account, self.stack_name),
+                        'arn:aws:{}::{}:policy/*{}*'.format(IAMIAMActions.name, self.account, self.stack_name),
                         'arn:aws:{}:{}:{}:*{}*'.format(SecretsManagerActions.name, self.region, self.account,  self.stack_name),
                         'arn:aws:{}:{}:{}:*{}*'.format(SecretsManagerActions.name, self.region, self.account, self.aws_cred_secret.secret_name)
                     ]
