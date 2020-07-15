@@ -12,7 +12,7 @@ class DevStack(core.Stack):
 
     def __init__(self, parent: core.App, name: str):
         super().__init__(parent, name)
-        accessible_apps = ['Guywilsonjr']
+        accessible_apps = ['GWJR']
         accessible_cfn_app_regs = ['arn:aws:{}:{}:{}:*{}*'.format(CFNActions.name, self.region, self.account, app) for app in accessible_apps]
         accessible_iam_app_regs = ['arn:aws:{}::{}:role/*{}*'.format(IAMIAMActions.name, self.account, app) for app in accessible_apps]
         accessible_app_regs = accessible_cfn_app_regs + accessible_iam_app_regs
@@ -52,7 +52,7 @@ class DevStack(core.Stack):
 
         self.deploy_role = iam.Role(
             self,
-            'DeployRole',
+            'DepRol',
             assumed_by=pyiam.CFN_PRINCIPAL,
             inline_policies={'Policy': iam.PolicyDocument(
                 statements=[iam.PolicyStatement(
