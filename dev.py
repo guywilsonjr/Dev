@@ -2,31 +2,39 @@ import json
 from aws_cdk import core
 from aws_cdk import aws_iam as iam
 from PyAwnfra.pyawnfra.secretsmanager.secretsmanager import PreDefinedSecret, Secrets
-from PyAwnfra.pyawnfra.iam.actions import IAMIAMActions, SecretsManagerActions, CFNActions, KMSActions
+from PyAwnfra.pyawnfra.iam.actions import IAMIAMActions, SecretsManagerActions, CFNActions, KMSActions, LambdaActions
 from PyAwnfra.pyawnfra import iam as pyiam
 app = core.App()
-
 
 
 class DevStack(core.Stack):
 
     def __init__(self, parent: core.App, name: str):
         super().__init__(parent, name)
-        accessible_apps = ['GWJR']
+        accessible_apps = ['GWJR', 'Dev']
+        accessible_lamb_app_regs = ['arn:aws:{}:{}:{}:function:*{}*'.format(LambdaActions.name, self.region, self.account, app) for app in accessible_apps]
         accessible_cfn_app_regs = ['arn:aws:{}:{}:{}:*{}*'.format(CFNActions.name, self.region, self.account, app) for app in accessible_apps]
         accessible_iam_app_regs = ['arn:aws:{}::{}:role/*{}*'.format(IAMIAMActions.name, self.account, app) for app in accessible_apps]
-        accessible_app_regs = accessible_cfn_app_regs + accessible_iam_app_regs
+        accessible_app_regs = accessible_cfn_app_regs + accessible_iam_app_regs + accessible_lamb_app_regs
+
+        self.app_access_statement = iam.PolicyStatement(
+            actions=[CFNActions.FULL_ACCESS, IAMIAMActions.FULL_ACCESS, LambdaActions.INVOKE_FUNCTION],
+            resources=accessible_app_regs)
+
         self.sb_user = iam.User(
             self,
             'SBUser',
             managed_policies=[
+                iam.ManagedPolicy.from_aws_managed_policy_name('AWSLambdaReadOnlyAccess'),
+                iam.ManagedPolicy.from_aws_managed_policy_name('IAMReadOnlyAccess'),
+                iam.ManagedPolicy.from_aws_managed_policy_name('AWSCloudFormationReadOnlyAccess'),
+                iam.ManagedPolicy.from_aws_managed_policy_name('AmazonRoute53ReadOnlyAccess'),
+                iam.ManagedPolicy.from_aws_managed_policy_name('AmazonS3FullAccess'),
                 iam.ManagedPolicy(
                 self,
                 'SBUserPolicy',
-                statements=[iam.PolicyStatement(
-                    actions=[CFNActions.FULL_ACCESS, IAMIAMActions.FULL_ACCESS],
-                    resources=accessible_app_regs)]
-                )]
+                statements=[self.app_access_statement]
+            )]
         )
 
         self.sb_user_access_key = iam.CfnAccessKey(
@@ -54,7 +62,7 @@ class DevStack(core.Stack):
             self,
             'DepRol',
             assumed_by=pyiam.CFN_PRINCIPAL,
-            inline_policies={'Policy': iam.PolicyDocument(
+            inline_policies={'Pol': iam.PolicyDocument(
                 statements=[iam.PolicyStatement(
                     actions=[
                         CFNActions.FULL_ACCESS,
@@ -70,12 +78,15 @@ class DevStack(core.Stack):
                         'arn:aws:{}::{}:policy/*{}*'.format(IAMIAMActions.name, self.account, self.stack_name),
                         'arn:aws:{}:{}:{}:*{}*'.format(SecretsManagerActions.name, self.region, self.account,  self.stack_name),
                         'arn:aws:{}:{}:{}:*{}*'.format(SecretsManagerActions.name, self.region, self.account, self.aws_cred_secret.secret_name)
-                    ]
+                    ] + ['arn:aws:{}::{}:role/*{}*'.format(IAMIAMActions.name, self.account, accessible_app) for accessible_app in accessible_apps]
                 ), iam.PolicyStatement(
                     actions=[KMSActions.FULL_ACCESS],
                     resources=['*'])
                 ])})
+        core.CfnOutput(self, 'DeployRoleArn', value=self.deploy_role.role_arn)
+        core.CfnOutput(self, 'SBUserName', value=self.sb_user.user_name)
 
 
-dev_stack = DevStack(app, "Dev")
+DevStack(app, "Dev")
 app.synth()
+
